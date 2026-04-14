@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1360" height="520" viewBox="0 0 1360 520">
+  <defs>
+    <style>
+      .title { font: 700 24px Arial, sans-serif; fill: #232f3e; }
+      .label { font: 600 14px Arial, sans-serif; fill: #232f3e; }
+      .small { font: 500 12px Arial, sans-serif; fill: #232f3e; }
+      .box { rx: 12; ry: 12; stroke-width: 2; }
+    </style>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#005073" />
+    </marker>
+    <marker id="arrow-gray" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#666" />
+    </marker>
+  </defs>
+
+  <text x="24" y="38" class="title">Ministack Serverless Event Flow</text>
+
+  <rect x="170" y="70" width="1160" height="410" fill="none" stroke="#232f3e" stroke-width="2" rx="18" ry="18" />
+  <text x="196" y="98" class="label">AWS Cloud (ministack)</text>
+
+  <rect class="box" x="24" y="220" width="120" height="70" fill="#d9edf9" stroke="#6c8ebf" />
+  <text x="84" y="248" text-anchor="middle" class="label">Client</text>
+  <text x="84" y="268" text-anchor="middle" class="small">curl / app</text>
+
+  <rect class="box" x="220" y="220" width="150" height="70" fill="#fdf0c7" stroke="#d6b656" />
+  <text x="295" y="245" text-anchor="middle" class="label">API Gateway</text>
+  <text x="295" y="265" text-anchor="middle" class="small">POST /events</text>
+
+  <rect class="box" x="430" y="220" width="130" height="70" fill="#ffe1d8" stroke="#b85450" />
+  <text x="495" y="245" text-anchor="middle" class="label">Lambda</text>
+  <text x="495" y="265" text-anchor="middle" class="small">api_ingest</text>
+
+  <rect class="box" x="620" y="220" width="120" height="70" fill="#e0f3df" stroke="#82b366" />
+  <text x="680" y="245" text-anchor="middle" class="label">SNS Topic</text>
+  <text x="680" y="265" text-anchor="middle" class="small">events</text>
+
+  <rect class="box" x="820" y="160" width="120" height="70" fill="#f3e4fb" stroke="#9673a6" />
+  <text x="880" y="185" text-anchor="middle" class="label">SQS Queue</text>
+  <text x="880" y="205" text-anchor="middle" class="small">events</text>
+
+  <rect class="box" x="820" y="310" width="120" height="70" fill="#f0f0f0" stroke="#666" />
+  <text x="880" y="335" text-anchor="middle" class="label">SQS DLQ</text>
+  <text x="880" y="355" text-anchor="middle" class="small">events-dlq</text>
+
+  <rect class="box" x="1000" y="160" width="150" height="70" fill="#ffe1d8" stroke="#b85450" />
+  <text x="1075" y="185" text-anchor="middle" class="label">Lambda</text>
+  <text x="1075" y="205" text-anchor="middle" class="small">worker_consumer</text>
+
+  <rect class="box" x="1000" y="310" width="190" height="70" fill="#e0f3df" stroke="#82b366" />
+  <text x="1095" y="335" text-anchor="middle" class="label">DynamoDB</text>
+  <text x="1095" y="355" text-anchor="middle" class="small">ministack-lab-dev-events</text>
+
+  <line x1="144" y1="255" x2="220" y2="255" stroke="#005073" stroke-width="2.5" marker-end="url(#arrow)" />
+  <text x="182" y="246" text-anchor="middle" class="small">HTTP</text>
+
+  <line x1="370" y1="255" x2="430" y2="255" stroke="#005073" stroke-width="2.5" marker-end="url(#arrow)" />
+  <text x="400" y="246" text-anchor="middle" class="small">Invoke</text>
+
+  <line x1="560" y1="255" x2="620" y2="255" stroke="#005073" stroke-width="2.5" marker-end="url(#arrow)" />
+  <text x="590" y="246" text-anchor="middle" class="small">Publish</text>
+
+  <line x1="740" y1="255" x2="820" y2="195" stroke="#005073" stroke-width="2.5" marker-end="url(#arrow)" />
+  <text x="776" y="212" text-anchor="middle" class="small">Subscription</text>
+
+  <line x1="940" y1="195" x2="1000" y2="195" stroke="#005073" stroke-width="2.5" marker-end="url(#arrow)" />
+  <text x="970" y="186" text-anchor="middle" class="small">Event Source Mapping</text>
+
+  <line x1="1075" y1="230" x2="1095" y2="310" stroke="#005073" stroke-width="2.5" marker-end="url(#arrow)" />
+  <text x="1112" y="273" class="small">PutItem</text>
+
+  <line x1="880" y1="230" x2="880" y2="310" stroke="#666" stroke-width="2.5" stroke-dasharray="7 6" marker-end="url(#arrow-gray)" />
+  <text x="894" y="274" class="small">Redrive</text>
+</svg>
