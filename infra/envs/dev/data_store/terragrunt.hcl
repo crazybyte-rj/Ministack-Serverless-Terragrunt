@@ -10,4 +10,9 @@ terraform {
   source = "../../../modules/data_store"
 }
 
-inputs = local.env_cfg.locals.common_inputs
+inputs = merge(
+  local.env_cfg.locals.common_inputs,
+  {
+    dynamodb_billing_mode = local.env_cfg.locals.common_inputs.dynamodb_billing_mode
+  }
+)

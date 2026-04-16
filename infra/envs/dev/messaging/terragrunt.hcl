@@ -10,4 +10,9 @@ terraform {
   source = "../../../modules/messaging"
 }
 
-inputs = local.env_cfg.locals.common_inputs
+inputs = merge(
+  local.env_cfg.locals.common_inputs,
+  {
+    sqs_max_receive_count = 5
+  }
+)

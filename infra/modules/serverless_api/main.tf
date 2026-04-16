@@ -2,6 +2,18 @@ locals {
   stack_name = "${var.project_name}-${var.environment}"
 }
 
+data "aws_iam_policy_document" "lambda_assume_role" {
+  statement {
+    effect  = "Allow"
+    actions = ["sts:AssumeRole"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["lambda.amazonaws.com"]
+    }
+  }
+}
+
 provider "aws" {
   region                      = var.aws_region
   access_key                  = var.aws_access_key_id
@@ -28,30 +40,19 @@ data "archive_file" "lambda_zip" {
 resource "aws_iam_role" "lambda_exec" {
   name = "${local.stack_name}-lambda-role"
 
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
-        Principal = {
-          Service = "lambda.amazonaws.com"
-        }
-      }
-    ]
-  })
+  assume_role_policy = data.aws_iam_policy_document.lambda_assume_role.json
 }
 
 resource "aws_iam_role_policy_attachment" "lambda_basic_execution" {
   role       = aws_iam_role.lambda_exec.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+  policy_arn = var.lambda_basic_execution_policy_arn
 }
 
 resource "aws_lambda_function" "handler" {
   function_name = "${local.stack_name}-hello"
   role          = aws_iam_role.lambda_exec.arn
   handler       = "handler.lambda_handler"
-  runtime       = "python3.11"
+  runtime       = var.lambda_runtime
   filename      = data.archive_file.lambda_zip.output_path
   source_code_hash = data.archive_file.lambda_zip.output_base64sha256
 
@@ -72,13 +73,13 @@ resource "aws_apigatewayv2_integration" "lambda_proxy" {
 
 resource "aws_apigatewayv2_route" "hello" {
   api_id    = aws_apigatewayv2_api.http_api.id
-  route_key = "GET /hello"
+  route_key = var.hello_route_key
   target    = "integrations/${aws_apigatewayv2_integration.lambda_proxy.id}"
 }
 
 resource "aws_apigatewayv2_stage" "default" {
   api_id      = aws_apigatewayv2_api.http_api.id
-  name        = "$default"
+  name        = var.api_gateway_stage_name
   auto_deploy = true
 }
 

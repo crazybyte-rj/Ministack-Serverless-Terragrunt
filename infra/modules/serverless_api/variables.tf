@@ -27,3 +27,23 @@ variable "aws_secret_access_key" {
   type        = string
   description = "Secret key for local AWS emulation"
 }
+
+variable "lambda_runtime" {
+  type        = string
+  description = "Runtime used by the Lambda function"
+}
+
+variable "hello_route_key" {
+  type        = string
+  description = "Route key exposed by the HTTP API"
+}
+
+variable "api_gateway_stage_name" {
+  type        = string
+  description = "Stage name used by the HTTP API"
+}
+
+variable "lambda_basic_execution_policy_arn" {
+  type        = string
+  description = "IAM policy ARN attached to the Lambda execution role for basic logging"
+}

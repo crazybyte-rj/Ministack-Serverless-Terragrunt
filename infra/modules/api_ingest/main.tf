@@ -3,6 +3,38 @@ locals {
   build_dir  = "${path.module}/build/${local.stack_name}-api"
 }
 
+data "aws_iam_policy_document" "lambda_assume_role" {
+  statement {
+    effect  = "Allow"
+    actions = ["sts:AssumeRole"]
+
+    principals {
+      type        = "Service"
+      identifiers = ["lambda.amazonaws.com"]
+    }
+  }
+}
+
+data "aws_iam_policy_document" "lambda_logs" {
+  statement {
+    effect = "Allow"
+    actions = [
+      "logs:CreateLogGroup",
+      "logs:CreateLogStream",
+      "logs:PutLogEvents"
+    ]
+    resources = ["*"]
+  }
+}
+
+data "aws_iam_policy_document" "publish_events" {
+  statement {
+    effect    = "Allow"
+    actions   = ["sns:Publish"]
+    resources = [var.sns_topic_arn]
+  }
+}
+
 resource "null_resource" "prepare_lambda_package" {
   triggers = {
     handler_hash      = filesha256("${path.module}/lambda_src/handler.py")
@@ -15,7 +47,7 @@ set -e
 rm -rf "${local.build_dir}"
 mkdir -p "${local.build_dir}"
 cp -R "${path.module}/lambda_src/." "${local.build_dir}/"
-python3 -m pip install -r "${path.module}/lambda_src/requirements.txt" -t "${local.build_dir}" --upgrade
+${var.lambda_build_python} -m pip install -r "${path.module}/lambda_src/requirements.txt" -t "${local.build_dir}" --upgrade
 EOT
   }
 }
@@ -30,63 +62,39 @@ data "archive_file" "lambda_zip" {
 resource "aws_iam_role" "lambda_exec" {
   name = "${local.stack_name}-api-lambda-role"
 
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
-        Principal = {
-          Service = "lambda.amazonaws.com"
-        }
-      }
-    ]
-  })
+  assume_role_policy = data.aws_iam_policy_document.lambda_assume_role.json
 }
 
-resource "aws_iam_role_policy" "lambda_policy" {
-  name = "${local.stack_name}-api-lambda-policy"
+resource "aws_iam_role_policy" "lambda_logs" {
+  name = "${local.stack_name}-api-lambda-logs"
   role = aws_iam_role.lambda_exec.id
 
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "logs:CreateLogGroup",
-          "logs:CreateLogStream",
-          "logs:PutLogEvents"
-        ]
-        Resource = "*"
-      },
-      {
-        Effect = "Allow"
-        Action = [
-          "sns:Publish"
-        ]
-        Resource = var.sns_topic_arn
-      }
-    ]
-  })
+  policy = data.aws_iam_policy_document.lambda_logs.json
+}
+
+resource "aws_iam_role_policy" "publish_events" {
+  name = "${local.stack_name}-api-publish-events"
+  role = aws_iam_role.lambda_exec.id
+
+  policy = data.aws_iam_policy_document.publish_events.json
 }
 
 resource "aws_lambda_function" "ingest" {
   function_name    = "${local.stack_name}-api-ingest"
   role             = aws_iam_role.lambda_exec.arn
   handler          = "handler.lambda_handler"
-  runtime          = "python3.11"
+  runtime          = var.lambda_runtime
   filename         = data.archive_file.lambda_zip.output_path
   source_code_hash = data.archive_file.lambda_zip.output_base64sha256
 
   environment {
     variables = {
-      SNS_TOPIC_ARN = var.sns_topic_arn
-      AWS_REGION         = "us-east-1"
-      AWS_DEFAULT_REGION = "us-east-1"
-      AWS_ACCESS_KEY_ID  = "test"
-      AWS_SECRET_ACCESS_KEY = "test"
-      AWS_ENDPOINT_URL   = "http://localhost:4566"
+      SNS_TOPIC_ARN         = var.sns_topic_arn
+      AWS_REGION            = var.aws_region
+      AWS_DEFAULT_REGION    = var.aws_region
+      AWS_ACCESS_KEY_ID     = var.aws_access_key_id
+      AWS_SECRET_ACCESS_KEY = var.aws_secret_access_key
+      AWS_ENDPOINT_URL      = var.aws_endpoint_url
     }
   }
 }
@@ -105,19 +113,19 @@ resource "aws_apigatewayv2_integration" "ingest_lambda" {
 
 resource "aws_apigatewayv2_route" "publish_event" {
   api_id    = aws_apigatewayv2_api.http_api.id
-  route_key = "POST /events"
+  route_key = var.publish_event_route_key
   target    = "integrations/${aws_apigatewayv2_integration.ingest_lambda.id}"
 }
 
 resource "aws_apigatewayv2_route" "health" {
   api_id    = aws_apigatewayv2_api.http_api.id
-  route_key = "GET /health"
+  route_key = var.health_route_key
   target    = "integrations/${aws_apigatewayv2_integration.ingest_lambda.id}"
 }
 
 resource "aws_apigatewayv2_stage" "default" {
   api_id      = aws_apigatewayv2_api.http_api.id
-  name        = "$default"
+  name        = var.api_gateway_stage_name
   auto_deploy = true
 }
 

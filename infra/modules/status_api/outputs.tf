@@ -9,12 +9,12 @@ output "api_invoke_url" {
 }
 
 output "api_invoke_url_local" {
-  value       = "http://${aws_apigatewayv2_api.http_api.id}.execute-api.localhost:4566/$default"
+  value       = "http://${aws_apigatewayv2_api.http_api.id}.${var.api_gateway_local_domain}/${var.api_gateway_stage_name}"
   description = "Local invoke URL (ministack ApiEndpoint format)"
 }
 
 output "api_invoke_url_local_host_style" {
-  value       = "http://${aws_apigatewayv2_api.http_api.id}.execute-api.localhost.localstack.cloud:4566"
+  value       = "http://${aws_apigatewayv2_api.http_api.id}.${var.api_gateway_local_host_style_domain}"
   description = "Local invoke URL (compat host style fallback)"
 }
 

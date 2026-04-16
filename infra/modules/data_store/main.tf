@@ -4,7 +4,7 @@ locals {
 
 resource "aws_dynamodb_table" "events" {
   name         = "${local.stack_name}-events"
-  billing_mode = "PAY_PER_REQUEST"
+  billing_mode = var.dynamodb_billing_mode
   hash_key     = "pk"
   range_key    = "sk"
 
@@ -38,7 +38,7 @@ resource "aws_dynamodb_table" "events" {
 
 resource "aws_dynamodb_table" "dlq_events" {
   name         = "${local.stack_name}-dlq-events"
-  billing_mode = "PAY_PER_REQUEST"
+  billing_mode = var.dynamodb_billing_mode
   hash_key     = "pk"
   range_key    = "sk"
 
